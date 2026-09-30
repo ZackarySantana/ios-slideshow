@@ -56,7 +56,10 @@
       <div id="qr-caption" class="qr-caption"></div>
     </div>
 
-    <div id="status" class="status bl" aria-live="polite"></div>
+    <div id="status" class="status bl" hidden>
+      <div id="status-note" class="status-line" aria-live="polite"></div>
+      <div id="status-count" class="status-line"></div>
+    </div>
 
     <nav id="controls" class="controls" aria-label="Slideshow controls">
       <button class="ctl" data-action="exit" data-tip="Exit to setup" aria-label="Exit to setup">
@@ -81,15 +84,37 @@
         <svg class="i-expand" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
         <svg class="i-collapse" viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>
       </button>
+      <button class="ctl" data-action="gallery" data-tip="Gallery (G)" aria-label="Gallery">
+        <svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
+      </button>
       <button class="ctl" data-action="settings" data-tip="Settings (S)" aria-label="Settings">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
       </button>
     </nav>
 
+    <div id="gallery" class="gallery" hidden>
+      <div class="gallery-panel" role="dialog" aria-modal="true" aria-labelledby="gallery-title">
+        <div class="gallery-head">
+          <div>
+            <h2 id="gallery-title">Queue</h2>
+            <p id="gallery-sub" class="gallery-sub"></p>
+          </div>
+          <button id="gallery-close" class="btn small" type="button">Close</button>
+        </div>
+        <div id="gallery-scroll" class="gallery-scroll">
+          <div id="gallery-grid" class="gallery-grid"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="settings" class="settings" hidden>
       <div class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="sheet-handle" aria-hidden="true"></div>
         <div class="settings-head">
-          <h2 id="settings-title">Settings</h2>
+          <div>
+            <h2 id="settings-title" tabindex="-1">Settings</h2>
+            <p id="settings-sub" class="settings-sub"></p>
+          </div>
           <button id="settings-done" class="btn small" type="button">Done</button>
         </div>
         <div id="options-home-player"></div>
@@ -97,93 +122,123 @@
     </div>
   </div>
 
-  <!-- Options form: moved between the setup card and the in-player settings -->
+  <!-- Options form: moved between the setup card and the in-player settings.
+       data-only="setup|player" parts show in just one of those places. -->
   <template id="options-template">
     <form id="options" class="options" autocomplete="off" novalidate>
-      <label class="field setup-only">
-        <span class="label">Shared album link</span>
-        <input name="album" type="url" inputmode="url" spellcheck="false"
-               placeholder="https://www.icloud.com/sharedalbum/#B0aB1cD2eF3gH4i">
-      </label>
-
-      <fieldset>
-        <legend>Playback</legend>
-        <label class="row">
-          <span>Seconds per photo</span>
-          <input name="sec" type="number" min="2" max="600" step="1" inputmode="numeric" class="num">
-        </label>
-        <label class="row">
-          <span>Shuffle</span>
-          <input name="shuffle" type="checkbox" class="switch">
-        </label>
-        <label class="row">
-          <span>Loop</span>
-          <input name="loop" type="checkbox" class="switch">
-        </label>
-        <div class="row">
-          <span>Transition</span>
-          <div class="seg">
-            <label><input type="radio" name="tr" value="fade"><span>Fade</span></label>
-            <label><input type="radio" name="tr" value="none"><span>None</span></label>
+      <fieldset class="group">
+        <legend>Album</legend>
+        <div class="group-body">
+          <div class="field">
+            <label for="opt-album">Link</label>
+            <div class="field-inline">
+              <input id="opt-album" name="album" type="url" inputmode="url" spellcheck="false"
+                     aria-describedby="album-hint"
+                     placeholder="https://www.icloud.com/sharedalbum/#B0aB1cD2eF3gH4i">
+              <button id="copy-album" class="icon-btn" type="button" data-only="player" aria-label="Copy album link">
+                <svg class="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
+                <svg class="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+              </button>
+            </div>
+            <p id="album-hint" class="hint" data-only="player">To use a different album,
+              <button id="exit-link" class="text-btn" type="button">Exit to setup</button></p>
+            <span id="copy-live" class="sr-only" aria-live="polite"></span>
           </div>
-        </div>
-        <div class="row">
-          <span>Fit</span>
-          <div class="seg">
-            <label><input type="radio" name="fit" value="contain"><span>Contain</span></label>
-            <label><input type="radio" name="fit" value="cover"><span>Cover</span></label>
+          <div class="row">
+            <span id="lbl-refresh">Auto-refresh</span>
+            <div class="seg" role="radiogroup" aria-labelledby="lbl-refresh">
+              <label><input type="radio" name="refresh" value="0"><span>Off</span></label>
+              <label><input type="radio" name="refresh" value="2"><span>2m</span></label>
+              <label><input type="radio" name="refresh" value="5"><span>5m</span></label>
+              <label><input type="radio" name="refresh" value="15"><span>15m</span></label>
+            </div>
           </div>
-        </div>
-        <div class="row">
-          <span>Auto-refresh</span>
-          <div class="seg">
-            <label><input type="radio" name="refresh" value="0"><span>Off</span></label>
-            <label><input type="radio" name="refresh" value="2"><span>2m</span></label>
-            <label><input type="radio" name="refresh" value="5"><span>5m</span></label>
-            <label><input type="radio" name="refresh" value="15"><span>15m</span></label>
+          <div class="row-block">
+            <label class="row">
+              <span>Exclude duplicate photos</span>
+              <input name="dupes" type="checkbox" class="switch" aria-describedby="dupe-status">
+            </label>
+            <p id="dupe-status" class="row-sub"></p>
+            <div class="dupe-progress" data-only="player" role="progressbar" aria-label="Checking for duplicates" hidden><div></div></div>
+            <div id="dupe-groups" class="dupe-groups" data-only="player"></div>
           </div>
         </div>
       </fieldset>
 
-      <fieldset>
+      <fieldset class="group">
+        <legend>Playback</legend>
+        <div class="group-body">
+          <label class="row">
+            <span>Seconds per photo</span>
+            <input name="sec" type="number" min="2" max="600" step="1" inputmode="numeric" class="num">
+          </label>
+          <label class="row">
+            <span>Shuffle</span>
+            <input name="shuffle" type="checkbox" class="switch">
+          </label>
+          <label class="row">
+            <span>Loop</span>
+            <input name="loop" type="checkbox" class="switch">
+          </label>
+          <div class="row">
+            <span id="lbl-tr">Transition</span>
+            <div class="seg" role="radiogroup" aria-labelledby="lbl-tr">
+              <label><input type="radio" name="tr" value="fade"><span>Fade</span></label>
+              <label><input type="radio" name="tr" value="none"><span>None</span></label>
+            </div>
+          </div>
+          <div class="row">
+            <span id="lbl-fit">Fit</span>
+            <div class="seg" role="radiogroup" aria-labelledby="lbl-fit">
+              <label><input type="radio" name="fit" value="contain"><span>Contain</span></label>
+              <label><input type="radio" name="fit" value="cover"><span>Cover</span></label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="group">
         <legend>QR code</legend>
-        <label class="row">
-          <span>Show QR code</span>
-          <input name="qr" type="checkbox" class="switch">
-        </label>
-        <div class="qr-opts">
-          <div class="row">
-            <span>Position</span>
-            <div class="seg corners">
-              <label title="Top left"><input type="radio" name="qrpos" value="tl"><span>↖</span></label>
-              <label title="Top right"><input type="radio" name="qrpos" value="tr"><span>↗</span></label>
-              <label title="Bottom left"><input type="radio" name="qrpos" value="bl"><span>↙</span></label>
-              <label title="Bottom right"><input type="radio" name="qrpos" value="br"><span>↘</span></label>
-            </div>
-          </div>
-          <div class="row">
-            <span>Size</span>
-            <div class="seg">
-              <label><input type="radio" name="qrsize" value="s"><span>Small</span></label>
-              <label><input type="radio" name="qrsize" value="m"><span>Medium</span></label>
-            </div>
-          </div>
-          <label class="field">
-            <span class="label">QR link</span>
-            <input name="qrurl" type="url" inputmode="url" spellcheck="false" placeholder="Same as the album link">
-            <span class="hint">The public album link is view-only. To let guests add photos, they need an invite
-              to the shared album (Apple ID), so you can point this at an invite page or form instead.</span>
+        <div class="group-body">
+          <label class="row">
+            <span>Show QR code</span>
+            <input name="qr" type="checkbox" class="switch">
           </label>
-          <label class="field">
-            <span class="label">Caption</span>
-            <input name="qrcap" type="text" maxlength="60" placeholder="No caption">
-          </label>
-          <div class="qr-preview-wrap">
-            <div class="qr qr-preview">
-              <div class="qr-code"></div>
-              <div class="qr-caption"></div>
+          <div class="qr-opts">
+            <div class="qr-preview-wrap">
+              <div class="qr qr-preview">
+                <div class="qr-code"></div>
+                <div class="qr-caption"></div>
+              </div>
+              <p class="hint qr-preview-note"></p>
             </div>
-            <p class="hint qr-preview-note"></p>
+            <div class="row">
+              <span id="lbl-qrpos">Position</span>
+              <div class="seg corners" role="radiogroup" aria-labelledby="lbl-qrpos">
+                <label title="Top left"><input type="radio" name="qrpos" value="tl" aria-label="Top left"><span><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="13" height="13" rx="3"/><circle cx="5" cy="5" r="2.2" class="fill"/></svg></span></label>
+                <label title="Top right"><input type="radio" name="qrpos" value="tr" aria-label="Top right"><span><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="13" height="13" rx="3"/><circle cx="11" cy="5" r="2.2" class="fill"/></svg></span></label>
+                <label title="Bottom left"><input type="radio" name="qrpos" value="bl" aria-label="Bottom left"><span><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="13" height="13" rx="3"/><circle cx="5" cy="11" r="2.2" class="fill"/></svg></span></label>
+                <label title="Bottom right"><input type="radio" name="qrpos" value="br" aria-label="Bottom right"><span><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="13" height="13" rx="3"/><circle cx="11" cy="11" r="2.2" class="fill"/></svg></span></label>
+              </div>
+            </div>
+            <div class="row">
+              <span id="lbl-qrsize">Size</span>
+              <div class="seg" role="radiogroup" aria-labelledby="lbl-qrsize">
+                <label><input type="radio" name="qrsize" value="s"><span>Small</span></label>
+                <label><input type="radio" name="qrsize" value="m"><span>Medium</span></label>
+              </div>
+            </div>
+            <div class="field">
+              <label for="opt-qrurl">Link</label>
+              <input id="opt-qrurl" name="qrurl" type="url" inputmode="url" spellcheck="false"
+                     placeholder="Same as the album link" aria-describedby="qrurl-hint">
+              <p id="qrurl-hint" class="hint">Leave empty to use the album link, which guests can only view.
+                Nobody can upload from it. To let guests add photos, link to a sign-up form and invite them to the album.</p>
+            </div>
+            <div class="field">
+              <label for="opt-qrcap">Caption</label>
+              <input id="opt-qrcap" name="qrcap" type="text" maxlength="60" placeholder="No caption">
+            </div>
           </div>
         </div>
       </fieldset>
