@@ -1,0 +1,14 @@
+{
+  "name": "icloud-album-slideshow",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Play any public iCloud Shared Album as a full-screen slideshow.",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

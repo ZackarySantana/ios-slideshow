@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Album Slideshow</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Setup -->
+  <main id="setup" class="screen" hidden>
+    <div class="card">
+      <header class="card-head">
+        <h1>Album Slideshow</h1>
+        <p class="muted">Play a public iCloud Shared Album full screen on this device.</p>
+      </header>
+      <div id="options-home-setup"></div>
+      <div id="setup-error" class="error" role="alert" hidden></div>
+      <button id="start-btn" class="btn primary wide" type="button">Start slideshow</button>
+    </div>
+  </main>
+
+  <!-- Resume gate: needs a tap for full screen and wake lock -->
+  <main id="gate" class="screen" hidden>
+    <div class="gate-inner">
+      <p id="gate-title" class="gate-title"></p>
+      <button id="gate-btn" class="btn primary big" type="button">Tap to start</button>
+      <div id="gate-error" class="error" role="alert" hidden></div>
+      <button id="gate-edit" class="btn link" type="button">Change album or settings</button>
+    </div>
+  </main>
+
+  <!-- Player -->
+  <div id="player" hidden>
+    <div id="stage" class="fit-contain fade">
+      <img class="layer" alt="" draggable="false">
+      <img class="layer" alt="" draggable="false">
+    </div>
+
+    <div id="message" class="message" hidden>
+      <div class="spinner" id="message-spinner"></div>
+      <p id="message-text"></p>
+    </div>
+
+    <div id="qr" class="qr br small" hidden>
+      <div id="qr-code" class="qr-code"></div>
+      <div id="qr-caption" class="qr-caption"></div>
+    </div>
+
+    <div id="status" class="status bl" aria-live="polite"></div>
+
+    <nav id="controls" class="controls" aria-label="Slideshow controls">
+      <button class="ctl" data-action="exit" title="Exit to setup" aria-label="Exit to setup">
+        <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/><path d="M4 4v16" /></svg>
+      </button>
+      <span class="sep"></span>
+      <button class="ctl" data-action="prev" title="Previous (←)" aria-label="Previous">
+        <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <button class="ctl play" data-action="toggle" title="Pause (Space)" aria-label="Pause">
+        <svg class="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>
+        <svg class="i-play" viewBox="0 0 24 24"><path d="M7 4.5l12 7.5-12 7.5z" class="fill"/></svg>
+      </button>
+      <button class="ctl" data-action="next" title="Next (→)" aria-label="Next">
+        <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+      </button>
+      <span class="sep"></span>
+      <button class="ctl" data-action="refresh" title="Refresh now (R)" aria-label="Refresh now">
+        <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+      </button>
+      <button class="ctl" data-action="settings" title="Settings (S)" aria-label="Settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+    </nav>
+
+    <div id="settings" class="settings" hidden>
+      <div class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="settings-head">
+          <h2 id="settings-title">Settings</h2>
+          <button id="settings-done" class="btn small" type="button">Done</button>
+        </div>
+        <div id="options-home-player"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Options form: moved between the setup card and the in-player settings -->
+  <template id="options-template">
+    <form id="options" class="options" autocomplete="off" novalidate>
+      <label class="field setup-only">
+        <span class="label">Shared album link</span>
+        <input name="album" type="url" inputmode="url" spellcheck="false"
+               placeholder="https://www.icloud.com/sharedalbum/#B0aB1cD2eF3gH4i">
+      </label>
+
+      <fieldset>
+        <legend>Playback</legend>
+        <label class="row">
+          <span>Seconds per photo</span>
+          <input name="sec" type="number" min="2" max="600" step="1" inputmode="numeric" class="num">
+        </label>
+        <label class="row">
+          <span>Shuffle</span>
+          <input name="shuffle" type="checkbox" class="switch">
+        </label>
+        <label class="row">
+          <span>Loop</span>
+          <input name="loop" type="checkbox" class="switch">
+        </label>
+        <div class="row">
+          <span>Transition</span>
+          <div class="seg">
+            <label><input type="radio" name="tr" value="fade"><span>Fade</span></label>
+            <label><input type="radio" name="tr" value="none"><span>None</span></label>
+          </div>
+        </div>
+        <div class="row">
+          <span>Fit</span>
+          <div class="seg">
+            <label><input type="radio" name="fit" value="contain"><span>Contain</span></label>
+            <label><input type="radio" name="fit" value="cover"><span>Cover</span></label>
+          </div>
+        </div>
+        <div class="row">
+          <span>Auto-refresh</span>
+          <div class="seg">
+            <label><input type="radio" name="refresh" value="0"><span>Off</span></label>
+            <label><input type="radio" name="refresh" value="2"><span>2m</span></label>
+            <label><input type="radio" name="refresh" value="5"><span>5m</span></label>
+            <label><input type="radio" name="refresh" value="15"><span>15m</span></label>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>QR code</legend>
+        <label class="row">
+          <span>Show QR code</span>
+          <input name="qr" type="checkbox" class="switch">
+        </label>
+        <div class="qr-opts">
+          <div class="row">
+            <span>Position</span>
+            <div class="seg corners">
+              <label title="Top left"><input type="radio" name="qrpos" value="tl"><span>↖</span></label>
+              <label title="Top right"><input type="radio" name="qrpos" value="tr"><span>↗</span></label>
+              <label title="Bottom left"><input type="radio" name="qrpos" value="bl"><span>↙</span></label>
+              <label title="Bottom right"><input type="radio" name="qrpos" value="br"><span>↘</span></label>
+            </div>
+          </div>
+          <div class="row">
+            <span>Size</span>
+            <div class="seg">
+              <label><input type="radio" name="qrsize" value="s"><span>Small</span></label>
+              <label><input type="radio" name="qrsize" value="m"><span>Medium</span></label>
+            </div>
+          </div>
+          <label class="field">
+            <span class="label">QR link</span>
+            <input name="qrurl" type="url" inputmode="url" spellcheck="false" placeholder="Same as the album link">
+            <span class="hint">The public album link is view-only. To let guests add photos, they need an invite
+              to the shared album (Apple ID), so you can point this at an invite page or form instead.</span>
+          </label>
+          <label class="field">
+            <span class="label">Caption</span>
+            <input name="qrcap" type="text" maxlength="60" placeholder="No caption">
+          </label>
+          <div class="qr-preview-wrap">
+            <div class="qr qr-preview">
+              <div class="qr-code"></div>
+              <div class="qr-caption"></div>
+            </div>
+            <p class="hint qr-preview-note"></p>
+          </div>
+        </div>
+      </fieldset>
+    </form>
+  </template>
+
+  <script src="vendor/qrcode.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
