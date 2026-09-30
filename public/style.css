@@ -334,6 +334,33 @@ fieldset > .row:last-child, .qr-opts > .row:last-child { border-bottom: 0; }
 #player.paused .ctl .i-play { display: block; }
 #player.paused .ctl .i-pause { display: none; }
 .ctl.spinning svg { animation: spin 1s linear infinite; }
+.ctl .i-collapse { display: none; }
+#player.fullscreen .ctl .i-collapse { display: block; }
+#player.fullscreen .ctl .i-expand { display: none; }
+
+/* Hover tooltips for the control buttons (mouse/trackpad only). */
+.ctl { position: relative; }
+.ctl[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translate(-50%, 4px);
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: rgba(20, 20, 22, .92);
+  border: 1px solid rgba(255, 255, 255, .1);
+  color: #e8e8ec;
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease, transform .15s ease;
+}
+@media (hover: hover) {
+  .ctl[data-tip]:hover::after { opacity: 1; transform: translate(-50%, 0); transition-delay: .25s; }
+}
 .sep { width: 1px; height: 22px; background: rgba(255, 255, 255, .12); margin: 0 4px; }
 
 /* Settings overlay */

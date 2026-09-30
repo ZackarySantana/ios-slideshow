@@ -200,6 +200,26 @@
     } catch { /* not supported (e.g. iPhone Safari) */ }
   }
 
+  function isFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+
+  function toggleFullscreen() {
+    if (isFullscreen()) exitFullscreen();
+    else enterFullscreen();
+  }
+
+  // Keep the full-screen button in sync however full screen is entered or left.
+  function syncFullscreenButton() {
+    const on = isFullscreen();
+    const btn = document.querySelector('[data-action="fullscreen"]');
+    document.getElementById('player').classList.toggle('fullscreen', on);
+    btn.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
+    btn.dataset.tip = on ? 'Exit full screen (F)' : 'Full screen (F)';
+  }
+  document.addEventListener('fullscreenchange', syncFullscreenButton);
+  document.addEventListener('webkitfullscreenchange', syncFullscreenButton);
+
   function exitFullscreen() {
     const exit = document.exitFullscreen || document.webkitExitFullscreen;
     if (exit && (document.fullscreenElement || document.webkitFullscreenElement)) {
@@ -676,7 +696,7 @@
       els.player.classList.toggle('paused', this.paused);
       const btn = $('[data-action="toggle"]');
       btn.setAttribute('aria-label', this.paused ? 'Play' : 'Pause');
-      btn.title = this.paused ? 'Play (Space)' : 'Pause (Space)';
+      btn.dataset.tip = this.paused ? 'Play (Space)' : 'Pause (Space)';
     },
 
     // ---- UI bits ----
@@ -788,6 +808,8 @@
   els.controls.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
+    // Mouse clicks shouldn't leave a focus ring behind (keyboard use keeps it).
+    if (e.detail > 0) btn.blur();
     activity.poke();
     switch (btn.dataset.action) {
       case 'prev': player.advance(-1); break;
@@ -796,6 +818,7 @@
       case 'refresh': player.refresh({ manual: true }); break;
       case 'settings': player.openSettings(); break;
       case 'exit': exitToSetup(); break;
+      case 'fullscreen': toggleFullscreen(); break;
     }
   });
 
@@ -816,7 +839,7 @@
       k: () => player.togglePause(),
       r: () => player.refresh({ manual: true }),
       s: () => player.openSettings(),
-      f: () => enterFullscreen(),
+      f: () => toggleFullscreen(),
     }[e.key.length === 1 ? e.key.toLowerCase() : e.key];
     if (handled) {
       e.preventDefault();
@@ -953,6 +976,11 @@
   // ---------------------------------------------------------------------------
   // Boot
   // ---------------------------------------------------------------------------
+
+  if (!(document.fullscreenEnabled || document.webkitFullscreenEnabled)) {
+    $('[data-action="fullscreen"]').hidden = true;
+  }
+  syncFullscreenButton();
 
   const initial = settingsFromQuery(location.search);
   if (initial.album) {
